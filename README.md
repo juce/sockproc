@@ -1,4 +1,4 @@
-## Introduction.
+## Introduction
 
 Sockproc daemon is a simple server for executing shell commands or processes.
 It can be useful in the situations, where a typical system call to launch 
@@ -8,13 +8,13 @@ written to it, and then once child process completes, its exit code,
 output stream data and error stream data can be read back from the socket.
 
 
-## Example:
+## Example
 
-1. Launch sockproc on a UNIX domain socket:
+Launch sockproc on a UNIX domain socket:
 
     $ ./sockproc /tmp/shell.sock
 
-2. Connect to socket and execute command:
+Connect to socket and execute command:
 
     $ telnet /tmp/shell.sock
     Trying /tmp/shell.sock...
@@ -44,7 +44,7 @@ Execute a bad command:
     Connection closed by foreign host.
 
 
-## Wire protocol.
+## Wire protocol
 
 The protocol is very simple, similar somewhat to HTTP:
 
