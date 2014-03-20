@@ -123,7 +123,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
     struct buffer_chain_t *out_buffers;
     struct buffer_chain_t *err_buffers;
     struct buffer_chain_t *curr;
-    size_t rc, count;
+    ssize_t rc, count;
     char input_buf[2048];
 
     if (pipe(stdin_pipe) < 0) {
@@ -199,6 +199,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
                 write(stdin_pipe[PIPE_WRITE], input_buf, rc);
                 count -= rc;
             }
+            close(stdin_pipe[PIPE_WRITE]);
         }
 
         /* read output */
