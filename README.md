@@ -14,13 +14,15 @@ Launch sockproc on a UNIX domain socket:
 
     $ ./sockproc /tmp/shell.sock
 
-Connect to socket and execute command:
+Connect to socket and type in a command line to execute, followed
+by a line that contains the number 0:
 
     $ telnet /tmp/shell.sock
     Trying /tmp/shell.sock...
     Connected to (null).
     Escape character is '^]'.
     find /usr/local/include | grep lua
+    0
     status:0
     109
     /usr/local/include/lua.h
@@ -37,6 +39,7 @@ Execute a bad command:
     Connected to (null).
     Escape character is '^]'.
     foobar
+    0
     status:32512
     0
     37
@@ -51,6 +54,8 @@ The protocol is very simple, similar somewhat to HTTP:
 ### Request format:
 
     <command-line>\r\n
+    <stdin-byte-count>\r\n
+    <stdin-data>
 
 ### Response format:
 

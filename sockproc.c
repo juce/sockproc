@@ -110,7 +110,7 @@ void free_buffer_chain(struct buffer_chain_t* buffers)
 }
 
 
-int create_child(int fd, const char* cmd, char* const argv[], char* const env[], const char* input) 
+int create_child(int fd, const char* cmd, char* const argv[], char* const env[], int fd_in, size_t in_byte_count) 
 {
     int stdin_pipe[2];
     int stdout_pipe[2];
@@ -123,6 +123,8 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
     struct buffer_chain_t *out_buffers;
     struct buffer_chain_t *err_buffers;
     struct buffer_chain_t *curr;
+    size_t rc, count;
+    char input_buf[2048];
 
     if (pipe(stdin_pipe) < 0) {
         perror("allocating pipe for child input redirect");
@@ -186,9 +188,17 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         close(stdout_pipe[PIPE_WRITE]); 
         close(stderr_pipe[PIPE_WRITE]); 
 
-        /* pipe input to child, if provided */
-        if (NULL != input) {
-          write(stdin_pipe[PIPE_WRITE], input, strlen(input));
+        /* write input to child, if provided */
+        if (fd_in != -1 && in_byte_count > 0) {
+            count = in_byte_count;
+            while (count > 0) {
+                rc = read(fd_in, input_buf, sizeof(input_buf));
+                if (rc == 0) {
+                    break;
+                }
+                write(stdin_pipe[PIPE_WRITE], input_buf, rc);
+                count -= rc;
+            }
         }
 
         /* read output */
@@ -201,11 +211,11 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         waitpid(child_pid, &child_exit_code, 0);
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf, sizeof(buf), "status:%d\n", child_exit_code);
+        snprintf(buf, sizeof(buf), "status:%d\r\n", child_exit_code);
         write(fd, buf, strlen(buf));
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf, sizeof(buf), "%zu\n", total_bytes(out_buffers));
+        snprintf(buf, sizeof(buf), "%zu\r\n", total_bytes(out_buffers));
         write(fd, buf, strlen(buf));
         curr = out_buffers;
         while (curr) {
@@ -214,7 +224,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         }
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf, sizeof(buf), "%zu\n", total_bytes(err_buffers));
+        snprintf(buf, sizeof(buf), "%zu\r\n", total_bytes(err_buffers));
         write(fd, buf, strlen(buf));
         curr = err_buffers;
         while (curr) {
@@ -250,8 +260,9 @@ int main(int argc, char *argv[])
 {
     int fd, cl, rc;
     char buf[512];
-    char *p, *end;
-    int count, has_cmd;
+    char *p, *end, *bc;
+    int count;
+    size_t data_len;
     char *child_argv[4];
     char *socket_path;
 
@@ -286,26 +297,43 @@ int main(int argc, char *argv[])
         if (fork()==0) {
             /* child */
             memset(buf, 0, sizeof(buf));
-            p = buf; has_cmd = 0; count = sizeof(buf)-1;
+            p = bc = buf; count = sizeof(buf)-1;
             while (count > 0) {
-                rc = read(cl, p, count);
-                if (rc > 0) {
-                    if ((end = strstr(buf, "\r\n"))) {
-                        end[0] = '\0';
-                        has_cmd = 1;
-                        break;
-                    }
-                    p += rc;
-                    count -= rc;
+                rc = read(cl, p, 1);
+                if (rc == 0) {
+                    break;
                 }
+                if ((end = strstr(buf, "\r\n"))) {
+                    end[0] = '\0';
+                    bc = end + 2;
+                    break;
+                }
+                p += rc;
+                count -= rc;
             }
-                    
+
+            data_len = 0;
+            p = bc;
+            do {
+                if ((end = strstr(bc, "\r\n"))) {
+                    break;
+                }
+                rc = read(cl, p, 1);
+                if (rc == 0) {
+                    break;
+                }
+                p += rc;
+                count -= rc;
+            } 
+            while (count > 0);
+            sscanf(bc, "%zu", &data_len);
+
             /* execute command */
             child_argv[0] = SHELL_BIN;
             child_argv[1] = SHELL_ARG;
             child_argv[2] = buf;
             child_argv[3] = 0;
-            create_child(cl, child_argv[0], child_argv, NULL, NULL);
+            create_child(cl, child_argv[0], child_argv, NULL, cl, data_len);
             close(cl);
 
             exit(0);
