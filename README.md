@@ -21,8 +21,8 @@ by a line that contains the number 0:
     Trying /tmp/shell.sock...
     Connected to (null).
     Escape character is '^]'.
-    find /usr/local/include | grep lua
-    0
+    &lt;b>find /usr/local/include | grep lua
+    0&lt;/b>
     status:0
     109
     /usr/local/include/lua.h
@@ -38,8 +38,8 @@ Execute a bad command:
     Trying /tmp/shell.sock...
     Connected to (null).
     Escape character is '^]'.
-    foobar
-    0
+    &lt;b>foobar
+    0&lt;/b>
     status:32512
     0
     37
