@@ -66,3 +66,4 @@ The protocol is very simple, similar somewhat to HTTP:
     <stderr-data>
 
 
+## License: MIT 
