@@ -269,9 +269,10 @@ int main(int argc, char *argv[])
     char *child_argv[4];
     char *socket_path;
     int port;
+    FILE* f;
 
     if (argc < 2) {
-        printf("Usage: %s (<unix-socket-path>|<tcp-port>)\n", argv[0]);
+        printf("Usage: %s (<unix-socket-path>|<tcp-port>) {pidfile}\n", argv[0]);
         exit(0);
     }
 
@@ -307,6 +308,15 @@ int main(int argc, char *argv[])
     }
 
     daemon(0, 0);
+
+    if (argc > 2) {
+        /* write pid to a file, if asked to do so */
+        f = fopen(argv[2], "w");
+        if (f) {
+            fprintf(f, "%d", getpid());
+            fclose(f);
+        }
+    }
 
     signal(SIGCHLD, SIG_IGN);
 
