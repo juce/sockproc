@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 #
 # Some unit-tests
 # (require 'nc' to be installed)
