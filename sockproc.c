@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
     int port;
     FILE* f;
 
-    if (argc < 2) {
+    if (argc < 2 || (argc >= 2 && argv[1][0] == '-')) {
         printf("Usage: %s (<unix-socket-path>|<tcp-port>) {pidfile}\n", argv[0]);
         exit(0);
     }
