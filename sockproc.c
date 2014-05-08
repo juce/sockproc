@@ -262,11 +262,17 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
 
 void terminate(int sig) 
 {
+    /* remove unix-socket-path */
     if (socket_path != NULL) {
         unlink(socket_path);
     }
-    unlink(pid_file);
+
+    /* remove pid_file */
+    if (pid_file != NULL) {
+        unlink(pid_file);
+    }
     
+    /* restore and raise signals */
     signal(sig, SIG_DFL);
     raise(sig);    
 }
@@ -287,7 +293,9 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
+    pid_file = NULL;
     socket_path = strdup(argv[1]);
+
     if (sscanf(socket_path, "%d", &port) == 1) {
         socket_path = NULL;
         /* tcp socket on localhost interface */
