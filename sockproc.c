@@ -38,8 +38,10 @@ struct buffer_chain_t {
 struct sockaddr_un addr;
 struct sockaddr_in addr_in;
 
-void proc_exit() {}
+char *socket_path;
+char *pid_file;
 
+void proc_exit() {}
 
 struct buffer_chain_t* read_pipe(int fd)
 {
@@ -258,6 +260,17 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
     return fork_result;
 }
 
+void terminate(int sig) 
+{
+    int port;
+    if (sscanf(socket_path, "%d", &port) != 1) {
+        unlink(socket_path);
+    }
+    unlink(pid_file);
+    
+    signal(sig, SIG_DFL);
+    raise(sig);    
+}
 
 int main(int argc, char *argv[])
 {
@@ -267,7 +280,6 @@ int main(int argc, char *argv[])
     int count;
     size_t data_len;
     char *child_argv[4];
-    char *socket_path;
     int port;
     FILE* f;
 
@@ -290,6 +302,10 @@ int main(int argc, char *argv[])
         }
     }
     else {
+        if (access(socket_path, X_OK) != -1) {
+            perror("socket_path error");
+            exit(-1);
+        }
         /* unix domain socket */
         unlink(socket_path);
         fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -310,6 +326,7 @@ int main(int argc, char *argv[])
     daemon(0, 0);
 
     if (argc > 2) {
+        pid_file = strdup(argv[2]);
         /* write pid to a file, if asked to do so */
         f = fopen(argv[2], "w");
         if (f) {
@@ -319,6 +336,7 @@ int main(int argc, char *argv[])
     }
 
     signal(SIGCHLD, SIG_IGN);
+    signal(SIGTERM, terminate);
 
     while (1) {
         if ( (cl = accept(fd, NULL, NULL)) == -1) {
