@@ -262,8 +262,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
 
 void terminate(int sig) 
 {
-    int port;
-    if (sscanf(socket_path, "%d", &port) != 1) {
+    if (socket_path != NULL) {
         unlink(socket_path);
     }
     unlink(pid_file);
@@ -290,6 +289,7 @@ int main(int argc, char *argv[])
 
     socket_path = strdup(argv[1]);
     if (sscanf(socket_path, "%d", &port) == 1) {
+        socket_path = NULL;
         /* tcp socket on localhost interface */
         fd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&addr_in, 0, sizeof(addr_in));
