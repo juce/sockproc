@@ -16,6 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 
 #if __APPLE__
 #undef daemon
@@ -306,13 +307,12 @@ int main(int argc, char *argv[])
         addr_in.sin_addr.s_addr = inet_addr("127.0.0.1");
         if (bind(fd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
             perror("bind error");
-            exit(-1);
         }
     }
     else {
         if (access(socket_path, X_OK) != -1) {
+            errno = EEXIST;
             perror("socket_path error");
-            exit(-1);
         }
         /* unix domain socket */
         unlink(socket_path);
@@ -322,13 +322,11 @@ int main(int argc, char *argv[])
         strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
             perror("bind error");
-            exit(-1);
         }
     }
 
     if (listen(fd, 32) == -1) {
       perror("listen error");
-      exit(-1);
     }
 
     daemon(0, 0);
