@@ -16,6 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 
 #if __APPLE__
 #undef daemon
@@ -38,8 +39,10 @@ struct buffer_chain_t {
 struct sockaddr_un addr;
 struct sockaddr_in addr_in;
 
-void proc_exit() {}
+char *socket_path;
+char *pid_file;
 
+void proc_exit() {}
 
 struct buffer_chain_t* read_pipe(int fd)
 {
@@ -258,6 +261,22 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
     return fork_result;
 }
 
+void terminate(int sig) 
+{
+    /* remove unix-socket-path */
+    if (socket_path != NULL) {
+        unlink(socket_path);
+    }
+
+    /* remove pid_file */
+    if (pid_file != NULL) {
+        unlink(pid_file);
+    }
+    
+    /* restore and raise signals */
+    signal(sig, SIG_DFL);
+    raise(sig);    
+}
 
 int main(int argc, char *argv[])
 {
@@ -267,7 +286,6 @@ int main(int argc, char *argv[])
     int count;
     size_t data_len;
     char *child_argv[4];
-    char *socket_path;
     int port;
     FILE* f;
 
@@ -276,8 +294,11 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
+    pid_file = NULL;
     socket_path = strdup(argv[1]);
+
     if (sscanf(socket_path, "%d", &port) == 1) {
+        socket_path = NULL;
         /* tcp socket on localhost interface */
         fd = socket(AF_INET, SOCK_STREAM, 0);
         memset(&addr_in, 0, sizeof(addr_in));
@@ -286,10 +307,13 @@ int main(int argc, char *argv[])
         addr_in.sin_addr.s_addr = inet_addr("127.0.0.1");
         if (bind(fd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
             perror("bind error");
-            exit(-1);
         }
     }
     else {
+        if (access(socket_path, X_OK) != -1) {
+            errno = EEXIST;
+            perror("socket_path error");
+        }
         /* unix domain socket */
         unlink(socket_path);
         fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -298,18 +322,17 @@ int main(int argc, char *argv[])
         strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
             perror("bind error");
-            exit(-1);
         }
     }
 
     if (listen(fd, 32) == -1) {
       perror("listen error");
-      exit(-1);
     }
 
     daemon(0, 0);
 
     if (argc > 2) {
+        pid_file = strdup(argv[2]);
         /* write pid to a file, if asked to do so */
         f = fopen(argv[2], "w");
         if (f) {
@@ -319,6 +342,7 @@ int main(int argc, char *argv[])
     }
 
     signal(SIGCHLD, SIG_IGN);
+    signal(SIGTERM, terminate);
 
     while (1) {
         if ( (cl = accept(fd, NULL, NULL)) == -1) {
