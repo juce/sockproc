@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
         addr_in.sin_addr.s_addr = inet_addr("127.0.0.1");
         if (bind(fd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
             perror("bind error");
-            return -1;
+            return errno;
         }
     }
     else {
