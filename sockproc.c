@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 
     if (argc < 2 || (argc >= 2 && argv[1][0] == '-')) {
         printf("Usage: %s (<unix-socket-path>|<tcp-port>) {pidfile}\n", argv[0]);
-        exit(0);
+        return 2;
     }
 
     pid_file = NULL;
@@ -307,12 +307,14 @@ int main(int argc, char *argv[])
         addr_in.sin_addr.s_addr = inet_addr("127.0.0.1");
         if (bind(fd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
             perror("bind error");
+            return -1;
         }
     }
     else {
         if (access(socket_path, X_OK) != -1) {
             errno = EEXIST;
             perror("socket_path error");
+            return errno;
         }
         /* unix domain socket */
         unlink(socket_path);
@@ -322,11 +324,13 @@ int main(int argc, char *argv[])
         strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
             perror("bind error");
+            return errno;
         }
     }
 
     if (listen(fd, 32) == -1) {
-      perror("listen error");
+        perror("listen error");
+        return errno;
     }
 
     daemon(0, 0);
@@ -346,7 +350,8 @@ int main(int argc, char *argv[])
 
     while (1) {
         if ( (cl = accept(fd, NULL, NULL)) == -1) {
-          perror("accept error");
+            perror("accept error");
+            return errno;
         }
 
         if (fork()==0) {
