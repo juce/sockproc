@@ -194,7 +194,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         close(stderr_pipe[PIPE_WRITE]); 
 
         /* write input to child, if provided */
-        if (fd_in != -1 && in_byte_count > 0) {
+        if (fd_in != -1) {
             count = in_byte_count;
             while (count > 0) {
                 rc = read(fd_in, input_buf, sizeof(input_buf));
