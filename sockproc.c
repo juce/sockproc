@@ -204,8 +204,8 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
                 write(stdin_pipe[PIPE_WRITE], input_buf, rc);
                 count -= rc;
             }
-            close(stdin_pipe[PIPE_WRITE]);
         }
+        close(stdin_pipe[PIPE_WRITE]);
 
         /* read output */
         out_buffers = read_pipe(stdout_pipe[PIPE_READ]);
@@ -243,7 +243,6 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         free_buffer_chain(err_buffers);
 
         /* close file descriptors */
-        close(stdin_pipe[PIPE_WRITE]);
         close(stdout_pipe[PIPE_READ]);
         close(stderr_pipe[PIPE_READ]);
 
