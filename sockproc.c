@@ -279,7 +279,7 @@ void terminate(int sig)
 
 int main(int argc, char *argv[])
 {
-    int fd, cl, rc;
+    int i, fd, cl, rc;
     char buf[512];
     char *p, *end, *bc;
     int count;
@@ -287,9 +287,10 @@ int main(int argc, char *argv[])
     char *child_argv[4];
     int port;
     FILE* f;
+    int daemonize = 1;
 
     if (argc < 2 || (argc >= 2 && argv[1][0] == '-')) {
-        printf("Usage: %s (<unix-socket-path>|<tcp-port>) {pidfile}\n", argv[0]);
+        printf("Usage: %s (<unix-socket-path>|<tcp-port>) {pidfile} [--foreground]\n", argv[0]);
         return 2;
     }
 
@@ -332,12 +333,30 @@ int main(int argc, char *argv[])
         return errno;
     }
 
-    daemon(0, 0);
+    /* check foreground flag */
+    for (i=2; i<=argc-1; i++) {
+        if (strcmp(argv[i], "--foreground")==0) {
+            daemonize = 0;
+            break;
+        }
+    }
+
+    if (daemonize) {
+       daemon(0, 0);
+    }
 
     if (argc > 2) {
-        pid_file = strdup(argv[2]);
+        if (strcmp(argv[2], "--foreground")==0) {
+            if (argc > 3) {
+                pid_file = strdup(argv[3]);
+            }
+        }
+        else {
+            pid_file = strdup(argv[2]);
+        }
+
         /* write pid to a file, if asked to do so */
-        f = fopen(argv[2], "w");
+        f = fopen(pid_file, "w");
         if (f) {
             fprintf(f, "%d", getpid());
             fclose(f);
@@ -346,6 +365,7 @@ int main(int argc, char *argv[])
 
     signal(SIGCHLD, SIG_IGN);
     signal(SIGTERM, terminate);
+    signal(SIGINT, terminate);
 
     while (1) {
         if ( (cl = accept(fd, NULL, NULL)) == -1) {
