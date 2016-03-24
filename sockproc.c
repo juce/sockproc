@@ -277,7 +277,7 @@ void terminate(int sig)
     raise(sig);    
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[], char *envp[])
 {
     int i, fd, cl, rc;
     char buf[512];
@@ -412,7 +412,7 @@ int main(int argc, char *argv[])
             child_argv[1] = SHELL_ARG;
             child_argv[2] = buf;
             child_argv[3] = 0;
-            create_child(cl, child_argv[0], child_argv, NULL, cl, data_len);
+            create_child(cl, child_argv[0], child_argv, envp, cl, data_len);
             close(cl);
 
             exit(0);
