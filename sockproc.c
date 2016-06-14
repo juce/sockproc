@@ -27,7 +27,7 @@ extern int daemon(int, int);
 #define PIPE_WRITE 1
 
 #define BUFFER_CHAIN_LINK_SIZE 16384 
-#define SHELL_BIN "/bin/bash"
+#define SHELL_BIN "/bin/sh"
 #define SHELL_ARG "-c"
 
 struct buffer_chain_t {
