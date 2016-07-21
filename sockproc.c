@@ -280,7 +280,7 @@ void terminate(int sig)
 int main(int argc, char *argv[], char *envp[])
 {
     int i, fd, cl, rc;
-    char buf[512];
+    char buf[2048];
     char *p, *end, *bc;
     int count;
     size_t data_len;

@@ -57,6 +57,8 @@ The protocol is very simple, similar somewhat to HTTP:
     <stdin-byte-count>\r\n
     <stdin-data>
 
+The `<command-line>` length cannot exceed 2040 characters.
+
 ### Response format:
 
     status:<process-exit-code>\r\n
