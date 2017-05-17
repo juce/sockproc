@@ -1,5 +1,5 @@
 sockproc: sockproc.c
-	gcc -Wall -Werror -o sockproc sockproc.c
+	$(CC) -Wall -Werror -o sockproc sockproc.c
 
 test: sockproc
 	./tests.sh 12345

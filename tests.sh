@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/sh -e
 #
 # Some unit-tests
 # (require 'nc' to be installed)
@@ -11,21 +11,21 @@ pidfile=/tmp/sockproc-test.pid
 echo "========================="
 
 # simple commands
-echo -e "uname -a\r\n0\r\n" | nc 127.0.0.1 $port
-echo -e "id\r\n0\r\n" | nc 127.0.0.1 $port
+echo "uname -a\r\n0\r\n" | nc 127.0.0.1 $port
+echo "id\r\n0\r\n" | nc 127.0.0.1 $port
 
 # commands with some input
-echo -e "wc -l\r\n12\r\nline1\r\nline2" | nc 127.0.0.1 $port
-echo -e "grep line\r\n20\r\nline1\r\nline2\r\nfoobar" | nc 127.0.0.1 $port
+echo "wc -l\r\n12\r\nline1\r\nline2" | nc 127.0.0.1 $port
+echo "grep line\r\n20\r\nline1\r\nline2\r\nfoobar" | nc 127.0.0.1 $port
 
 # bad command.expecting non-empty error stream
-echo -e "thisshouldfail\r\n0\r\n" | nc 127.0.0.1 $port
+echo "thisshouldfail\r\n0\r\n" | nc 127.0.0.1 $port
 
 # this should have data in both output and error streams
-echo -e "echo hello output && echo hello error >&2\r\n0\r\n" | nc 127.0.0.1 $port
+echo "echo hello output && echo hello error >&2\r\n0\r\n" | nc 127.0.0.1 $port
 
 # long command line strings
-echo -e "echo "\
+echo "echo "\
 "12345678901234567890123456789012345678901234567890"\
 "12345678901234567890123456789012345678901234567890"\
 "12345678901234567890123456789012345678901234567890"\
