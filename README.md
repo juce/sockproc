@@ -18,7 +18,7 @@ Launch sockproc on a UNIX domain socket:
 
 On Mac telnet works with both tcp sockets and unix-domain sockets, but on
 most Linux distributions, the **telnet** command is not as versatile. So we
-can employ a **sockat** utility instead, using "crlf" flag to enforce the
+can employ a **socat** utility instead, using "crlf" flag to enforce the
 '\r\n' line-endings for standard input.
 
 Connect to socket and type in a command line to execute, followed
