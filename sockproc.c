@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #if __APPLE__
 #undef daemon
@@ -27,7 +28,7 @@ extern int daemon(int, int);
 #define PIPE_READ 0
 #define PIPE_WRITE 1
 
-#define BUFFER_CHAIN_LINK_SIZE 16384 
+#define BUFFER_CHAIN_LINK_SIZE 16384
 #define SHELL_BIN "/bin/sh"
 #define SHELL_ARG "-c"
 
@@ -60,7 +61,7 @@ struct buffer_chain_t* read_pipe(int fd)
     }
     memset(buffers, 0, sizeof(struct buffer_chain_t));
     curr = buffers;
-    count = 0; 
+    count = 0;
     space = BUFFER_CHAIN_LINK_SIZE;
     p = curr->bytes;
     while ((n = read(fd, p, space)) > 0) {
@@ -105,7 +106,7 @@ size_t total_bytes(struct buffer_chain_t* buffers)
 void free_buffer_chain(struct buffer_chain_t* buffers)
 {
     struct buffer_chain_t *curr, *next;
-    
+
     curr = buffers;
 
     while (curr) {
@@ -116,7 +117,7 @@ void free_buffer_chain(struct buffer_chain_t* buffers)
 }
 
 
-int create_child(int fd, const char* cmd, char* const argv[], char* const env[], int fd_in, size_t in_byte_count) 
+int create_child(int fd, const char* cmd, char* const argv[], char* const env[], int fd_in, size_t in_byte_count)
 {
     int stdin_pipe[2];
     int stdout_pipe[2];
@@ -174,9 +175,9 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         close(stdin_pipe[PIPE_READ]);
         close(stdin_pipe[PIPE_WRITE]);
         close(stdout_pipe[PIPE_READ]);
-        close(stdout_pipe[PIPE_WRITE]); 
+        close(stdout_pipe[PIPE_WRITE]);
         close(stderr_pipe[PIPE_READ]);
-        close(stderr_pipe[PIPE_WRITE]); 
+        close(stderr_pipe[PIPE_WRITE]);
 
         /* run child process image */
         result = execve(cmd, argv, env);
@@ -191,8 +192,8 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
 
         /* close unused file descriptors, these are for child only */
         close(stdin_pipe[PIPE_READ]);
-        close(stdout_pipe[PIPE_WRITE]); 
-        close(stderr_pipe[PIPE_WRITE]); 
+        close(stdout_pipe[PIPE_WRITE]);
+        close(stderr_pipe[PIPE_WRITE]);
 
         /* write input to child, if provided */
         if (fd_in != -1) {
@@ -261,7 +262,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
     return fork_result;
 }
 
-void terminate(int sig) 
+void terminate(int sig)
 {
     /* remove unix-socket-path */
     if (socket_path != NULL) {
@@ -272,10 +273,15 @@ void terminate(int sig)
     if (pid_file != NULL) {
         unlink(pid_file);
     }
-    
+
     /* restore and raise signals */
     signal(sig, SIG_DFL);
-    raise(sig);    
+    raise(sig);
+}
+
+int is_valid_fd(int fd)
+{
+    return fcntl(fd, F_GETFL) != -1 || errno != EBADF;
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -289,9 +295,10 @@ int main(int argc, char *argv[], char *envp[])
     int port;
     FILE* f;
     int daemonize = 1;
+    int force = 0;
 
     if (argc < 2 || (argc >= 2 && argv[1][0] == '-')) {
-        printf("Usage: %s (<unix-socket-path>|<tcp-port>) {pidfile} [--foreground]\n", argv[0]);
+        printf("Usage: %s (<unix-socket-path>|<tcp-port>) {--force|pidfile} [--foreground]\n", argv[0]);
         return 2;
     }
 
@@ -312,14 +319,22 @@ int main(int argc, char *argv[], char *envp[])
         }
     }
     else {
-        if (access(socket_path, X_OK) != -1) {
+        if (argc > 2) {
+            if(strcmp(argv[2], "--force") == 0) {
+                force = 1;
+            }
+        }
+
+        if (access(socket_path, X_OK) != -1 && force == 0 ) {
             errno = EEXIST;
             perror("socket_path error");
             return errno;
         }
+
         /* unix domain socket */
         unlink(socket_path);
         fd = socket(AF_UNIX, SOCK_STREAM, 0);
+
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
@@ -404,7 +419,7 @@ int main(int argc, char *argv[], char *envp[])
                 }
                 p += rc;
                 count -= rc;
-            } 
+            }
             while (count > 0);
             sscanf(bc, "%zu", &data_len);
 
