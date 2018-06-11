@@ -27,7 +27,7 @@ extern int daemon(int, int);
 #define PIPE_READ 0
 #define PIPE_WRITE 1
 
-#define BUFFER_CHAIN_LINK_SIZE 16384 
+#define BUFFER_CHAIN_LINK_SIZE 16384
 #define SHELL_BIN "/bin/sh"
 #define SHELL_ARG "-c"
 
@@ -60,7 +60,7 @@ struct buffer_chain_t* read_pipe(int fd)
     }
     memset(buffers, 0, sizeof(struct buffer_chain_t));
     curr = buffers;
-    count = 0; 
+    count = 0;
     space = BUFFER_CHAIN_LINK_SIZE;
     p = curr->bytes;
     while ((n = read(fd, p, space)) > 0) {
@@ -105,7 +105,7 @@ size_t total_bytes(struct buffer_chain_t* buffers)
 void free_buffer_chain(struct buffer_chain_t* buffers)
 {
     struct buffer_chain_t *curr, *next;
-    
+
     curr = buffers;
 
     while (curr) {
@@ -116,7 +116,7 @@ void free_buffer_chain(struct buffer_chain_t* buffers)
 }
 
 
-int create_child(int fd, const char* cmd, char* const argv[], char* const env[], int fd_in, size_t in_byte_count) 
+int create_child(int fd, const char* cmd, char* const argv[], char* const env[], int fd_in, size_t in_byte_count)
 {
     int stdin_pipe[2];
     int stdout_pipe[2];
@@ -174,9 +174,9 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         close(stdin_pipe[PIPE_READ]);
         close(stdin_pipe[PIPE_WRITE]);
         close(stdout_pipe[PIPE_READ]);
-        close(stdout_pipe[PIPE_WRITE]); 
+        close(stdout_pipe[PIPE_WRITE]);
         close(stderr_pipe[PIPE_READ]);
-        close(stderr_pipe[PIPE_WRITE]); 
+        close(stderr_pipe[PIPE_WRITE]);
 
         /* run child process image */
         result = execve(cmd, argv, env);
@@ -191,8 +191,8 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
 
         /* close unused file descriptors, these are for child only */
         close(stdin_pipe[PIPE_READ]);
-        close(stdout_pipe[PIPE_WRITE]); 
-        close(stderr_pipe[PIPE_WRITE]); 
+        close(stdout_pipe[PIPE_WRITE]);
+        close(stderr_pipe[PIPE_WRITE]);
 
         /* write input to child, if provided */
         if (fd_in != -1) {
@@ -261,7 +261,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
     return fork_result;
 }
 
-void terminate(int sig) 
+void terminate(int sig)
 {
     /* remove unix-socket-path */
     if (socket_path != NULL) {
@@ -272,10 +272,10 @@ void terminate(int sig)
     if (pid_file != NULL) {
         unlink(pid_file);
     }
-    
+
     /* restore and raise signals */
     signal(sig, SIG_DFL);
-    raise(sig);    
+    raise(sig);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -404,7 +404,7 @@ int main(int argc, char *argv[], char *envp[])
                 }
                 p += rc;
                 count -= rc;
-            } 
+            }
             while (count > 0);
             sscanf(bc, "%zu", &data_len);
 
