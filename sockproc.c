@@ -218,7 +218,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         waitpid(child_pid, &child_exit_code, 0);
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf, sizeof(buf), "status:%d\r\n", WEXITSTATUS(child_exit_code));
+        snprintf(buf, sizeof(buf), "status:%d\r\n", child_exit_code);
         write(fd, buf, strlen(buf));
 
         memset(buf, 0, sizeof(buf));
