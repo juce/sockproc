@@ -289,6 +289,7 @@ int main(int argc, char *argv[], char *envp[])
     int port;
     FILE* f;
     int daemonize = 1;
+    int reuseaddr = 1;
 
     if (argc < 2 || (argc >= 2 && argv[1][0] == '-')) {
         printf("Usage: %s (<unix-socket-path>|<tcp-port>) {pidfile} [--foreground]\n", argv[0]);
@@ -307,7 +308,6 @@ int main(int argc, char *argv[], char *envp[])
         addr_in.sin_port = htons(port);
         addr_in.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-        int reuseaddr = 1;
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
 
         if (bind(fd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
@@ -328,7 +328,6 @@ int main(int argc, char *argv[], char *envp[])
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
 
-        int reuseaddr = 1;
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
 
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
