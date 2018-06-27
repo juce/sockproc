@@ -218,7 +218,7 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
         waitpid(child_pid, &child_exit_code, 0);
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf, sizeof(buf), "status:%d\r\n", child_exit_code);
+        snprintf(buf, sizeof(buf), "status:%d\r\n", WEXITSTATUS(child_exit_code));
         write(fd, buf, strlen(buf));
 
         memset(buf, 0, sizeof(buf));
@@ -306,6 +306,10 @@ int main(int argc, char *argv[], char *envp[])
         addr_in.sin_family = AF_INET;
         addr_in.sin_port = htons(port);
         addr_in.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+        int reuseaddr = 1;
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
+
         if (bind(fd, (struct sockaddr*)&addr_in, sizeof(addr_in)) == -1) {
             perror("bind error");
             return errno;
@@ -323,6 +327,10 @@ int main(int argc, char *argv[], char *envp[])
         memset(&addr, 0, sizeof(addr));
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
+
+        int reuseaddr = 1;
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(int));
+
         if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
             perror("bind error");
             return errno;
