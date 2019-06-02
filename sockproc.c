@@ -157,6 +157,10 @@ int create_child(int fd, const char* cmd, char* const argv[], char* const env[],
 
     if (fork_result == 0) {
         /* child continues here */
+
+        /* unused duplicate of socket fd */
+        close(fd);
+
         if (dup2(stdin_pipe[PIPE_READ], STDIN_FILENO) == -1) {
             perror("dup2: stdin");
             return -1;
@@ -383,6 +387,10 @@ int main(int argc, char *argv[], char *envp[])
 
         if (fork()==0) {
             /* child */
+
+            /* unused duplicate of listening socket */
+            close(fd);
+
             memset(buf, 0, sizeof(buf));
             p = bc = buf; count = sizeof(buf)-1;
             while (count > 0) {
@@ -421,8 +429,6 @@ int main(int argc, char *argv[], char *envp[])
             child_argv[2] = buf;
             child_argv[3] = 0;
             create_child(cl, child_argv[0], child_argv, envp, cl, data_len);
-            shutdown(cl, SHUT_WR);
-            close(cl);
 
             exit(0);
         }
