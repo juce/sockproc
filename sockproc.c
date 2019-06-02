@@ -421,6 +421,7 @@ int main(int argc, char *argv[], char *envp[])
             child_argv[2] = buf;
             child_argv[3] = 0;
             create_child(cl, child_argv[0], child_argv, envp, cl, data_len);
+            shutdown(cl, SHUT_WR);
             close(cl);
 
             exit(0);
