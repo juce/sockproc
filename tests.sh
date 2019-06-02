@@ -23,18 +23,21 @@ function runtests() {
     echo -e "======= $title =================="
 
     # simple commands
-    echo -e "uname -a\r\n0\r\n" | socat - $dest
-    echo -e "id\r\n0\r\n" | socat - $dest
+    echo -e "uname -a\r\n0\r\n" | socat -t10 - $dest
+    echo -e "id\r\n0\r\n" | socat -t10 - $dest
+
+    # long-running command
+    echo -e "date +%s; sleep 1; date +%s\r\n0\r\n" | socat -t10 - $dest
 
     # commands with some input
-    echo -e "wc -l\r\n12\r\nline1\r\nline2" | socat - $dest
-    echo -e "grep line\r\n20\r\nline1\r\nline2\r\nfoobar" | socat - $dest
+    echo -e "wc -l\r\n12\r\nline1\r\nline2" | socat -t10 - $dest
+    echo -e "grep line\r\n20\r\nline1\r\nline2\r\nfoobar" | socat -t10 - $dest
 
     # bad command.expecting non-empty error stream
-    echo -e "thisshouldfail\r\n0\r\n" | socat - $dest
+    echo -e "thisshouldfail\r\n0\r\n" | socat -t10 - $dest
 
     # this should have data in both output and error streams
-    echo -e "echo hello output && echo hello error >&2\r\n0\r\n" | socat - $dest
+    echo -e "echo hello output && echo hello error >&2\r\n0\r\n" | socat -t10 - $dest
 
     # long command line strings
     echo -e "echo "\
@@ -79,7 +82,7 @@ function runtests() {
     "12345678901234567890123456789012345678901234567890"\
     "12345678901234567890123456789012345678901234567890"\
     "1234567890123456789012345678901234567890"\
-    "\r\n0\r\n" | socat - $dest
+    "\r\n0\r\n" | socat -t10 - $dest
 }
 
 ./sockproc $port $pidfile
